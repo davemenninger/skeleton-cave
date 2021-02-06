@@ -12,6 +12,7 @@ typedef struct {
   int gold;
   char class[7];
   char race[8];
+  int health, will;
 } Character;
 
 SDL_Event event;
@@ -174,24 +175,40 @@ void drawstr(Uint32 *dst, int x, int y) {
   drawicn(dst, x * 8, y, geticn('S'), 1, 0);
   drawicn(dst, (x + 1) * 8, y, geticn('T'), 1, 0);
   drawicn(dst, (x + 2) * 8, y, geticn(character.strength + 48), 1, 0);
+  if (strncmp(character.race, "human", 5) == 0) {
+    drawicn(dst, (x + 3) * 8, y, geticn('+'), 2, 0);
+    drawicn(dst, (x + 4) * 8, y, geticn('1'), 2, 0);
+  }
 }
 
 void drawdex(Uint32 *dst, int x, int y) {
   drawicn(dst, x * 8, y, geticn('D'), 1, 0);
   drawicn(dst, (x + 1) * 8, y, geticn('E'), 1, 0);
   drawicn(dst, (x + 2) * 8, y, geticn(character.dexterity + 48), 1, 0);
+  if (strncmp(character.race, "halfling", 8) == 0) {
+    drawicn(dst, (x + 3) * 8, y, geticn('+'), 2, 0);
+    drawicn(dst, (x + 4) * 8, y, geticn('1'), 2, 0);
+  }
 }
 
 void drawwits(Uint32 *dst, int x, int y) {
   drawicn(dst, x * 8, y, geticn('W'), 1, 0);
   drawicn(dst, (x + 1) * 8, y, geticn('I'), 1, 0);
   drawicn(dst, (x + 2) * 8, y, geticn(character.wits + 48), 1, 0);
+  if (strncmp(character.race, "dwarf", 5) == 0) {
+    drawicn(dst, (x + 3) * 8, y, geticn('+'), 2, 0);
+    drawicn(dst, (x + 4) * 8, y, geticn('1'), 2, 0);
+  }
 }
 
 void drawcha(Uint32 *dst, int x, int y) {
   drawicn(dst, x * 8, y, geticn('C'), 1, 0);
   drawicn(dst, (x + 1) * 8, y, geticn('H'), 1, 0);
   drawicn(dst, (x + 2) * 8, y, geticn(character.charisma + 48), 1, 0);
+  if (strncmp(character.race, "elf", 3) == 0) {
+    drawicn(dst, (x + 3) * 8, y, geticn('+'), 2, 0);
+    drawicn(dst, (x + 4) * 8, y, geticn('1'), 2, 0);
+  }
 }
 
 void drawgold(Uint32 *dst, int x, int y) {
@@ -218,6 +235,26 @@ void drawclass(Uint32 *dst, int x, int y) {
   }
 }
 
+void drawhealth(Uint32 *dst, int x, int y) {
+  char h[3];
+  sprintf(h, "%d", character.health);
+  drawicn(dst, x * 8, y, geticn('H'), 1, 0);
+  drawicn(dst, (x + 1) * 8, y, geticn('P'), 1, 0);
+  for (int i = 0; i < 3; i++) {
+    drawicn(dst, (x + 2 + i) * 8, y, geticn(h[i]), 1, 0);
+  }
+}
+
+void drawwill(Uint32 *dst, int x, int y) {
+  char w[3];
+  sprintf(w, "%d", character.will);
+  drawicn(dst, x * 8, y, geticn('W'), 1, 0);
+  drawicn(dst, (x + 1) * 8, y, geticn('P'), 1, 0);
+  for (int i = 0; i < 3; i++) {
+    drawicn(dst, (x + 2 + i) * 8, y, geticn(w[i]), 1, 0);
+  }
+}
+
 void drawstats(Uint32 *dst, int x, int y) {
   drawrace(dst, x, y);
   drawclass(dst, x, y + 8);
@@ -226,6 +263,8 @@ void drawstats(Uint32 *dst, int x, int y) {
   drawwits(dst, x, y + 32);
   drawcha(dst, x, y + 40);
   drawgold(dst, x, y + 48);
+  drawhealth(dst, x + 40, y);
+  drawwill(dst, x + 40, y + 8);
 }
 
 void clear(Uint32 *dst) {
@@ -356,6 +395,39 @@ int validate_character(Character *character) {
   return 0;
 }
 
+int computestr(Character *character) {
+  int str = character->strength;
+  if (strncmp(character->race, "human", 5) == 0)
+    str += 1;
+  return str;
+}
+
+int computedex(Character *character) {
+  int dex = character->dexterity;
+  if (strncmp(character->race, "halfling", 8) == 0)
+    dex += 1;
+  return dex;
+}
+
+int computewit(Character *character) {
+  int wit = character->wits;
+  if (strncmp(character->race, "dwarf", 5) == 0)
+    wit += 1;
+  return wit;
+}
+
+int computecha(Character *character) {
+  int cha = character->charisma;
+  if (strncmp(character->race, "elf", 3) == 0)
+    cha += 1;
+  return cha;
+}
+
+void compute_health_and_will(Character *character) {
+  character->health = 20 + computestr(character) + computedex(character);
+  character->will = 20 + computewit(character) + computecha(character);
+}
+
 int open_character(Character *character, char *name) {
   char line[256];
   printf("Loading: %s...\n", name);
@@ -427,6 +499,7 @@ int setup() {
     return error("Character", "problem with character file");
 
   roll_for_gold(&character);
+  compute_health_and_will(&character);
 
   fflush(stdout);
 
