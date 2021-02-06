@@ -1,3 +1,7 @@
+_build
+.DS_Store
+screenshot.bmp
+
 # Prerequisites
 *.d
 
