@@ -11,6 +11,7 @@ typedef struct {
   int strength, dexterity, charisma, wits;
   int gold;
   char class[7];
+  char race[8];
 } Character;
 
 SDL_Event event;
@@ -203,6 +204,13 @@ void drawgold(Uint32 *dst, int x, int y) {
   }
 }
 
+void drawrace(Uint32 *dst, int x, int y) {
+  for (int i = 0; i < 8; i++) {
+    char c = character.race[i];
+    drawicn(dst, (x + i) * 8, y, geticn(c), 1, 0);
+  }
+}
+
 void drawclass(Uint32 *dst, int x, int y) {
   for (int i = 0; i < 7; i++) {
     char c = character.class[i];
@@ -211,12 +219,13 @@ void drawclass(Uint32 *dst, int x, int y) {
 }
 
 void drawstats(Uint32 *dst, int x, int y) {
-  drawclass(dst, x, y);
-  drawstr(dst, x, y + 8);
-  drawdex(dst, x, y + 16);
-  drawwits(dst, x, y + 24);
-  drawcha(dst, x, y + 32);
-  drawgold(dst, x, y + 40);
+  drawrace(dst, x, y);
+  drawclass(dst, x, y + 8);
+  drawstr(dst, x, y + 16);
+  drawdex(dst, x, y + 24);
+  drawwits(dst, x, y + 32);
+  drawcha(dst, x, y + 40);
+  drawgold(dst, x, y + 48);
 }
 
 void clear(Uint32 *dst) {
@@ -332,11 +341,18 @@ int validate_character(Character *character) {
       7)
     return error("Character", "sum of stats > 7");
 
-  if (strcmp(character->class, "fighter") != 0 &&
-      strcmp(character->class, "ranger") != 0 &&
-      strcmp(character->class, "wizard") != 0 &&
-      strcmp(character->class, "bard") != 0)
+  printf("class: %s\n", character->class);
+  if (strncmp(character->class, "fighter", 7) != 0 &&
+      strncmp(character->class, "ranger", 6) != 0 &&
+      strncmp(character->class, "wizard", 6) != 0 &&
+      strncmp(character->class, "bard", 4) != 0)
     return error("Character", "unknown class");
+
+  if (strncmp(character->race, "human", 5) != 0 &&
+      strncmp(character->race, "halfling", 8) != 0 &&
+      strncmp(character->race, "dwarf", 5) != 0 &&
+      strncmp(character->race, "elf", 3) != 0)
+    return error("Character", "unknown race");
 
   return 0;
 }
@@ -348,11 +364,13 @@ int open_character(Character *character, char *name) {
   if (!f)
     return error("Load", "Invalid character file");
   while (fgets(line, 256, f)) {
+    printf("line: %s\n", line);
     sscanf(line, "strength=%d\n", &character->strength);
     sscanf(line, "dexterity=%d\n", &character->dexterity);
     sscanf(line, "wits=%d\n", &character->wits);
     sscanf(line, "charisma=%d\n", &character->charisma);
     sscanf(line, "class=%s\n", character->class);
+    sscanf(line, "race=%s\n", character->race);
   }
   if (validate_character(character) != 0)
     return error("Validate", "invalid character");

@@ -10,6 +10,7 @@ dexterity=1
 charisma=1
 wits=2
 class=wizard
+race=halfling
 ```
 
 ## Credits
