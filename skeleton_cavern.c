@@ -26,6 +26,8 @@ Uint32 render_flags =
     0; // SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
 Uint32 *pixels;
 
+int mouse_x, mouse_y = 0;
+
 Character character;
 
 Uint32 theme[] = {0x000000, 0xFFFFFF, 0x72DEC2, 0x666666,
@@ -172,6 +174,10 @@ void drawicn(Uint32 *dst, int x, int y, Uint8 *sprite, int fg, int bg) {
     }
 }
 
+void drawmouse(Uint32 *dst){
+  putpixel(dst, mouse_x, mouse_y, 1);
+}
+
 void drawstr(Uint32 *dst, int x, int y) {
   drawicn(dst, x * 8, y, geticn('S'), 3, 0);
   drawicn(dst, (x + 1) * 8, y, geticn('T'), 3, 0);
@@ -277,6 +283,8 @@ void clear(Uint32 *dst) {
 
 void redraw(Uint32 *dst) {
 
+  clear(pixels);
+  drawmouse(dst);
   drawstats(dst, 0, 0);
 
   SDL_UpdateTexture(gTexture, NULL, dst, SCREEN_WIDTH * sizeof(Uint32));
@@ -333,6 +341,10 @@ int main(int argc, char *args[]) {
         default:
           (void)0;
         }
+        break;
+      case SDL_MOUSEMOTION:
+        mouse_x = event.motion.x - 20;
+        mouse_y = event.motion.y - 20;
         break;
       default:
         (void)0;
