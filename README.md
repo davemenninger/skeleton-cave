@@ -2,13 +2,14 @@
 
 ## character file
 
-The program loads a file named `hero.character` from the local directory.  Edit this file to alter your character's starting stats.  The file format is like:
+The program loads a file named `player.character` from the local directory.  Edit this file to alter your character's starting stats.  The file format is like:
 
 ```
 strength=2
 dexterity=1
 charisma=1
 wits=2
+class=wizard
 ```
 
 ## Credits

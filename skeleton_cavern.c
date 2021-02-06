@@ -407,7 +407,7 @@ int setup() {
 
   clear(pixels);
 
-  if (open_character(&character, "hero.character") != 0)
+  if (open_character(&character, "player.character") != 0)
     return error("Character", "problem with character file");
 
   roll_for_gold(&character);
