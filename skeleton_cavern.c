@@ -10,6 +10,7 @@ const int PAD = 2;
 typedef struct {
   int strength, dexterity, charisma, wits;
   int gold;
+  char class[7];
 } Character;
 
 SDL_Event event;
@@ -193,21 +194,29 @@ void drawcha(Uint32 *dst, int x, int y) {
 }
 
 void drawgold(Uint32 *dst, int x, int y) {
-  char g[10];
+  char g[3];
   sprintf(g, "%d", character.gold);
   drawicn(dst, x * 8, y, geticn('G'), 1, 0);
   drawicn(dst, (x + 1) * 8, y, geticn('P'), 1, 0);
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 3; i++) {
     drawicn(dst, (x + 2 + i) * 8, y, geticn(g[i]), 1, 0);
   }
 }
 
+void drawclass(Uint32 *dst, int x, int y) {
+  for (int i = 0; i < 7; i++) {
+    char c = character.class[i];
+    drawicn(dst, (x + i) * 8, y, geticn(c), 1, 0);
+  }
+}
+
 void drawstats(Uint32 *dst, int x, int y) {
-  drawstr(dst, x, y);
-  drawdex(dst, x, y + 8);
-  drawwits(dst, x, y + 16);
-  drawcha(dst, x, y + 24);
-  drawgold(dst, x, y + 32);
+  drawclass(dst, x, y);
+  drawstr(dst, x, y + 8);
+  drawdex(dst, x, y + 16);
+  drawwits(dst, x, y + 24);
+  drawcha(dst, x, y + 32);
+  drawgold(dst, x, y + 40);
 }
 
 void clear(Uint32 *dst) {
@@ -323,6 +332,12 @@ int validate_character(Character *character) {
       7)
     return error("Character", "sum of stats > 7");
 
+  if (strcmp(character->class, "fighter") != 0 &&
+      strcmp(character->class, "ranger") != 0 &&
+      strcmp(character->class, "wizard") != 0 &&
+      strcmp(character->class, "bard") != 0)
+    return error("Character", "unknown class");
+
   return 0;
 }
 
@@ -337,6 +352,7 @@ int open_character(Character *character, char *name) {
     sscanf(line, "dexterity=%d\n", &character->dexterity);
     sscanf(line, "wits=%d\n", &character->wits);
     sscanf(line, "charisma=%d\n", &character->charisma);
+    sscanf(line, "class=%s\n", character->class);
   }
   if (validate_character(character) != 0)
     return error("Validate", "invalid character");
