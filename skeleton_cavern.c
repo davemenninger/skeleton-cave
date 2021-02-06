@@ -9,6 +9,7 @@ const int PAD = 2;
 
 typedef struct {
   int strength, dexterity, charisma, wits;
+  int gold;
 } Character;
 
 SDL_Event event;
@@ -23,10 +24,6 @@ Uint32 render_flags =
 Uint32 *pixels;
 
 Character character;
-int strength = 0;
-int dexterity = 0;
-int charisma = 0;
-int wits = 0;
 
 Uint32 theme[] = {0x000000, 0xFFFFFF, 0x72DEC2, 0x666666, 0x222222};
 
@@ -195,11 +192,22 @@ void drawcha(Uint32 *dst, int x, int y) {
   drawicn(dst, (x + 2) * 8, y, geticn(character.charisma + 48), 1, 0);
 }
 
+void drawgold(Uint32 *dst, int x, int y) {
+  char g[10];
+  sprintf(g, "%d", character.gold);
+  drawicn(dst, x * 8, y, geticn('G'), 1, 0);
+  drawicn(dst, (x + 1) * 8, y, geticn('P'), 1, 0);
+  for (int i = 0; i < 10; i++) {
+    drawicn(dst, (x + 2 + i) * 8, y, geticn(g[i]), 1, 0);
+  }
+}
+
 void drawstats(Uint32 *dst, int x, int y) {
   drawstr(dst, x, y);
   drawdex(dst, x, y + 8);
   drawwits(dst, x, y + 16);
   drawcha(dst, x, y + 24);
+  drawgold(dst, x, y + 32);
 }
 
 void clear(Uint32 *dst) {
@@ -301,6 +309,15 @@ int validate_character(Character *character) {
   if (character->wits > 4)
     return error("Character", "wits > 4");
 
+  if (character->strength < 1)
+    return error("Character", "strength < 1");
+  if (character->dexterity < 1)
+    return error("Character", "dexterity < 1");
+  if (character->charisma < 1)
+    return error("Character", "charisma < 1");
+  if (character->wits < 1)
+    return error("Character", "wits < 1");
+
   if (character->strength + character->dexterity + character->charisma +
           character->wits >
       7)
@@ -315,7 +332,6 @@ int open_character(Character *character, char *name) {
   FILE *f = fopen(name, "r");
   if (!f)
     return error("Load", "Invalid character file");
-  character->strength = 0;
   while (fgets(line, 256, f)) {
     sscanf(line, "strength=%d\n", &character->strength);
     sscanf(line, "dexterity=%d\n", &character->dexterity);
@@ -331,7 +347,26 @@ int open_character(Character *character, char *name) {
   return 0;
 }
 
+int dice(int n, int d) {
+  int sum = 0;
+  printf("dice: %dd%d\n", n, d);
+  for (int i = 0; i < n; i++) {
+    int roll = (rand() % d) + 1;
+    printf("roll: %d\n", roll);
+    sum += roll;
+  }
+
+  return sum;
+}
+
+void roll_for_gold(Character *character) {
+  printf("rolling for initial gold...\n");
+  character->gold = dice(2, 6);
+}
+
 int setup() {
+  srand(time(NULL));
+
   if (SDL_Init(SDL_INIT_VIDEO) < 0)
     return error("init", SDL_GetError());
 
@@ -358,6 +393,10 @@ int setup() {
 
   if (open_character(&character, "hero.character") != 0)
     return error("Character", "problem with character file");
+
+  roll_for_gold(&character);
+
+  fflush(stdout);
 
   return 0;
 }
