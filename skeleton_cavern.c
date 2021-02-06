@@ -2,11 +2,27 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#define INIT_MODE 0
+#define CHARACTER_MODE 2
+#define WEAPONS_MODE 3
+#define ITEMS_MODE 4
+#define ROOM_SIZE_MODE 5
+#define ROOM_TYPE_MODE 6
+#define DOOR_MODE 7
+#define MONSTERS_MODE 8
+#define FIGHTING_MODE 9
+#define TREASURE_MODE 10
+
+#define GRAPH_PAPER_WIDTH 16
+#define GRAPH_PAPER_HEIGHT 16
+#define CELL_SIZE 16
+#define GRAPH_PAPER_X 64
+#define GRAPH_PAPER_Y 64
+
 /* Screen dimension constants */
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 const int PAD = 2;
-
 typedef struct {
   int strength, dexterity, charisma, wits;
   int gold;
@@ -14,6 +30,23 @@ typedef struct {
   char race[8];
   int health, will;
 } Character;
+
+typedef struct {
+  int size;
+  int type;
+} Room;
+
+typedef struct {
+  Room rooms[50];
+} Dungeon;
+
+typedef struct {
+  int color;
+} Cell;
+
+typedef struct {
+  Cell cells[GRAPH_PAPER_WIDTH][GRAPH_PAPER_HEIGHT];
+} GraphPaper;
 
 SDL_Event event;
 SDL_Rect rect;
@@ -27,8 +60,17 @@ Uint32 render_flags =
 Uint32 *pixels;
 
 int mouse_x, mouse_y = 0;
+int selected_cell_i, selected_cell_j = 0;
 
 Character character;
+Dungeon dungeon;
+GraphPaper graphpaper;
+
+int game_mode = INIT_MODE;
+
+// room generating
+Room current_gen_room;
+int gen_room_size = 0;
 
 Uint32 theme[] = {0x000000, 0xFFFFFF, 0x72DEC2, 0x666666,
                   0x222222, 0xBBBB11, 0xAA1111};
@@ -174,9 +216,7 @@ void drawicn(Uint32 *dst, int x, int y, Uint8 *sprite, int fg, int bg) {
     }
 }
 
-void drawmouse(Uint32 *dst){
-  putpixel(dst, mouse_x, mouse_y, 1);
-}
+void drawmouse(Uint32 *dst) { putpixel(dst, mouse_x, mouse_y, 1); }
 
 void drawstr(Uint32 *dst, int x, int y) {
   drawicn(dst, x * 8, y, geticn('S'), 3, 0);
@@ -274,6 +314,56 @@ void drawstats(Uint32 *dst, int x, int y) {
   drawgold(dst, x + 72, y + 16);
 }
 
+void drawmode(Uint32 *dst, int x, int y) {
+  drawicn(dst, x * 8, y, geticn('M'), 3, 0);
+  drawicn(dst, (x + 1) * 8, y, geticn('O'), 3, 0);
+  drawicn(dst, (x + 2) * 8, y, geticn('D'), 3, 0);
+  drawicn(dst, (x + 3) * 8, y, geticn('E'), 3, 0);
+  drawicn(dst, (x + 4) * 8, y, geticn(game_mode + 48), 3, 0);
+}
+
+void drawroomsquare(Uint32 *dst, int x, int y) {
+  for (int i = x; i < 16; i++) {
+    for (int j = y; j < 16; j++) {
+      putpixel(dst, i, j, 3);
+    }
+  }
+}
+
+void drawroom(Uint32 *dst, Room room) {
+  for (int i = 0; i < room.size; i++) {
+    drawroomsquare(dst, i * 16, i * 16);
+  }
+}
+
+void drawcell(Uint32 *dst, int x, int y, Cell cell) {
+  for (int i = 0; i < CELL_SIZE; i++) {
+    for (int j = 0; j < CELL_SIZE; j++) {
+      if (i != 0 && j != 0 && i != CELL_SIZE - 1 && j != CELL_SIZE - 1) {
+        putpixel(dst, x + i, y + j, cell.color);
+      }
+    }
+  }
+}
+
+void drawgraphpaper(Uint32 *dst, int x, int y) {
+  for (int i = 0; i < GRAPH_PAPER_WIDTH; i++) {
+    for (int j = 0; j < GRAPH_PAPER_HEIGHT; j++) {
+      if (i == 0 || j == 0 || i == GRAPH_PAPER_WIDTH - 1 ||
+          j == GRAPH_PAPER_HEIGHT - 1) {
+        putpixel(dst, (i * CELL_SIZE) + x, (j * CELL_SIZE) + y, 1);
+      }
+
+      drawcell(dst, (i * CELL_SIZE) + x, (j * CELL_SIZE) + y,
+               graphpaper.cells[i][j]);
+
+      if (i == selected_cell_i && j == selected_cell_j) {
+        putpixel(dst, (i * CELL_SIZE) + x + 5, (j * CELL_SIZE) + y + 5, 6);
+      }
+    }
+  }
+}
+
 void clear(Uint32 *dst) {
   int i, j;
   for (i = 0; i < SCREEN_HEIGHT; i++)
@@ -286,6 +376,8 @@ void redraw(Uint32 *dst) {
   clear(pixels);
   drawmouse(dst);
   drawstats(dst, 0, 0);
+  drawmode(dst, 0, 400);
+  drawgraphpaper(dst, GRAPH_PAPER_X, GRAPH_PAPER_X);
 
   SDL_UpdateTexture(gTexture, NULL, dst, SCREEN_WIDTH * sizeof(Uint32));
   SDL_RenderClear(rend);
@@ -299,6 +391,8 @@ int main(int argc, char *args[]) {
 
   if (setup() != 0)
     return error("Setup", "Error");
+
+  game_mode = ROOM_SIZE_MODE;
 
   while (!quit) {
     while (SDL_PollEvent(&event)) {
@@ -481,6 +575,21 @@ void roll_for_gold(Character *character) {
   character->gold = dice(2, 6);
 }
 
+void erase_graph_paper(GraphPaper *graphpaper) {
+  for (int i = 0; i < GRAPH_PAPER_WIDTH; i++) {
+    for (int j = 0; j < GRAPH_PAPER_HEIGHT; j++) {
+      graphpaper->cells[i][j].color = 4;
+    }
+  }
+}
+
+void gen_room() {
+  printf("rolling for room size...\n");
+  current_gen_room.size = dice(1, 6);
+  printf("rolling for room type...\n");
+  current_gen_room.type = dice(1, 6);
+}
+
 int setup() {
   srand(time(NULL));
 
@@ -511,6 +620,8 @@ int setup() {
   if (open_character(&character, "player.character") != 0)
     return error("Character", "problem with character file");
 
+  erase_graph_paper(&graphpaper);
+
   roll_for_gold(&character);
   compute_health_and_will(&character);
 
@@ -519,7 +630,23 @@ int setup() {
   return 0;
 }
 
-void update_stuff() {}
+void update_stuff() {
+  if (game_mode == ROOM_SIZE_MODE) {
+    if (current_gen_room.size == 0) {
+      gen_room();
+      printf("room size: %d\n", current_gen_room.size);
+    }
+  }
+
+  if (mouse_x > GRAPH_PAPER_X && mouse_y > GRAPH_PAPER_Y &&
+      mouse_x < GRAPH_PAPER_X + (GRAPH_PAPER_WIDTH * CELL_SIZE) &&
+      mouse_y < GRAPH_PAPER_Y + (GRAPH_PAPER_HEIGHT * CELL_SIZE)) {
+    selected_cell_i = (mouse_x - GRAPH_PAPER_X) / CELL_SIZE;
+    selected_cell_j = (mouse_y - GRAPH_PAPER_Y) / CELL_SIZE;
+  }
+
+  fflush(stdout);
+}
 
 int screenshot() {
   surface =
