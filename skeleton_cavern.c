@@ -7,6 +7,10 @@ const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 const int PAD = 2;
 
+typedef struct {
+  int strength, dexterity, charisma, wits;
+} Character;
+
 SDL_Event event;
 SDL_Rect rect;
 SDL_Renderer *rend;
@@ -18,6 +22,7 @@ Uint32 render_flags =
     0; // SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
 Uint32 *pixels;
 
+Character character;
 int strength = 0;
 int dexterity = 0;
 int charisma = 0;
@@ -169,25 +174,25 @@ void drawicn(Uint32 *dst, int x, int y, Uint8 *sprite, int fg, int bg) {
 void drawstr(Uint32 *dst, int x, int y) {
   drawicn(dst, x * 8, y, geticn('S'), 1, 0);
   drawicn(dst, (x + 1) * 8, y, geticn('T'), 1, 0);
-  drawicn(dst, (x + 2) * 8, y, geticn(strength + 48), 1, 0);
+  drawicn(dst, (x + 2) * 8, y, geticn(character.strength + 48), 1, 0);
 }
 
 void drawdex(Uint32 *dst, int x, int y) {
   drawicn(dst, x * 8, y, geticn('D'), 1, 0);
   drawicn(dst, (x + 1) * 8, y, geticn('E'), 1, 0);
-  drawicn(dst, (x + 2) * 8, y, geticn(dexterity + 48), 1, 0);
+  drawicn(dst, (x + 2) * 8, y, geticn(character.dexterity + 48), 1, 0);
 }
 
 void drawwits(Uint32 *dst, int x, int y) {
   drawicn(dst, x * 8, y, geticn('W'), 1, 0);
   drawicn(dst, (x + 1) * 8, y, geticn('I'), 1, 0);
-  drawicn(dst, (x + 2) * 8, y, geticn(wits + 48), 1, 0);
+  drawicn(dst, (x + 2) * 8, y, geticn(character.wits + 48), 1, 0);
 }
 
 void drawcha(Uint32 *dst, int x, int y) {
   drawicn(dst, x * 8, y, geticn('C'), 1, 0);
   drawicn(dst, (x + 1) * 8, y, geticn('H'), 1, 0);
-  drawicn(dst, (x + 2) * 8, y, geticn(wits + 48), 1, 0);
+  drawicn(dst, (x + 2) * 8, y, geticn(character.charisma + 48), 1, 0);
 }
 
 void drawstats(Uint32 *dst, int x, int y) {
@@ -203,6 +208,7 @@ void clear(Uint32 *dst) {
     for (j = 0; j < SCREEN_WIDTH; j++)
       dst[i * SCREEN_WIDTH + j] = theme[0];
 }
+
 void redraw(Uint32 *dst) {
 
   drawstats(dst, 1, 1);
@@ -217,7 +223,8 @@ int main(int argc, char *args[]) {
   (void)argc;
   (void)args;
 
-  setup();
+  if (setup() != 0)
+    return error("Setup", "Error");
 
   while (!quit) {
     while (SDL_PollEvent(&event)) {
@@ -284,6 +291,46 @@ int main(int argc, char *args[]) {
   return 0;
 }
 
+int validate_character(Character *character) {
+  if (character->strength > 9)
+    return error("Character", "strength > 9");
+  if (character->dexterity > 9)
+    return error("Character", "dexterity > 9");
+  if (character->charisma > 9)
+    return error("Character", "charisma > 9");
+  if (character->wits > 9)
+    return error("Character", "wits > 9");
+
+  if (character->strength + character->dexterity + character->charisma +
+          character->wits >
+      7)
+    return error("Character", "sum of stats > 7");
+
+  return 0;
+}
+
+int open_character(Character *character, char *name) {
+  char line[256];
+  printf("Loading: %s...\n", name);
+  FILE *f = fopen(name, "r");
+  if (!f)
+    return error("Load", "Invalid character file");
+  character->strength = 0;
+  while (fgets(line, 256, f)) {
+    sscanf(line, "strength=%d\n", &character->strength);
+    sscanf(line, "dexterity=%d\n", &character->dexterity);
+    sscanf(line, "wits=%d\n", &character->wits);
+    sscanf(line, "charisma=%d\n", &character->charisma);
+  }
+  if (validate_character(character) != 0)
+    return error("Validate", "invalid character");
+
+  printf("Loaded: %s\n", name);
+  fclose(f);
+
+  return 0;
+}
+
 int setup() {
   if (SDL_Init(SDL_INIT_VIDEO) < 0)
     return error("init", SDL_GetError());
@@ -308,6 +355,9 @@ int setup() {
     return error("Pixels", "Failed to allocate memory");
 
   clear(pixels);
+
+  if (open_character(&character, "hero.character") != 0)
+    return error("Character", "problem with character file");
 
   return 0;
 }

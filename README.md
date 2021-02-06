@@ -1,5 +1,16 @@
 # skeleton-cave
 
+## character file
+
+The program loads a file named `hero.character` from the local directory.  Edit this file to alter your character's starting stats.  The file format is like:
+
+```
+strength=2
+dexterity=1
+charisma=1
+wits=2
+```
+
 ## Credits
 
 * Skeleton Cavern is copyright Noah Patterson
