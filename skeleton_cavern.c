@@ -28,7 +28,8 @@ Uint32 *pixels;
 
 Character character;
 
-Uint32 theme[] = {0x000000, 0xFFFFFF, 0x72DEC2, 0x666666, 0x222222};
+Uint32 theme[] = {0x000000, 0xFFFFFF, 0x72DEC2, 0x666666,
+                  0x222222, 0xBBBB11, 0xAA1111};
 
 Uint8 icons[][8] = {
     {0x10, 0x00, 0x10, 0x00, 0x10, 0x00, 0x10, 0x00}, /* ruler */
@@ -172,8 +173,8 @@ void drawicn(Uint32 *dst, int x, int y, Uint8 *sprite, int fg, int bg) {
 }
 
 void drawstr(Uint32 *dst, int x, int y) {
-  drawicn(dst, x * 8, y, geticn('S'), 1, 0);
-  drawicn(dst, (x + 1) * 8, y, geticn('T'), 1, 0);
+  drawicn(dst, x * 8, y, geticn('S'), 3, 0);
+  drawicn(dst, (x + 1) * 8, y, geticn('T'), 3, 0);
   drawicn(dst, (x + 2) * 8, y, geticn(character.strength + 48), 1, 0);
   if (strncmp(character.race, "human", 5) == 0) {
     drawicn(dst, (x + 3) * 8, y, geticn('+'), 2, 0);
@@ -182,8 +183,8 @@ void drawstr(Uint32 *dst, int x, int y) {
 }
 
 void drawdex(Uint32 *dst, int x, int y) {
-  drawicn(dst, x * 8, y, geticn('D'), 1, 0);
-  drawicn(dst, (x + 1) * 8, y, geticn('E'), 1, 0);
+  drawicn(dst, x * 8, y, geticn('D'), 3, 0);
+  drawicn(dst, (x + 1) * 8, y, geticn('E'), 3, 0);
   drawicn(dst, (x + 2) * 8, y, geticn(character.dexterity + 48), 1, 0);
   if (strncmp(character.race, "halfling", 8) == 0) {
     drawicn(dst, (x + 3) * 8, y, geticn('+'), 2, 0);
@@ -192,8 +193,8 @@ void drawdex(Uint32 *dst, int x, int y) {
 }
 
 void drawwits(Uint32 *dst, int x, int y) {
-  drawicn(dst, x * 8, y, geticn('W'), 1, 0);
-  drawicn(dst, (x + 1) * 8, y, geticn('I'), 1, 0);
+  drawicn(dst, x * 8, y, geticn('W'), 3, 0);
+  drawicn(dst, (x + 1) * 8, y, geticn('I'), 3, 0);
   drawicn(dst, (x + 2) * 8, y, geticn(character.wits + 48), 1, 0);
   if (strncmp(character.race, "dwarf", 5) == 0) {
     drawicn(dst, (x + 3) * 8, y, geticn('+'), 2, 0);
@@ -202,8 +203,8 @@ void drawwits(Uint32 *dst, int x, int y) {
 }
 
 void drawcha(Uint32 *dst, int x, int y) {
-  drawicn(dst, x * 8, y, geticn('C'), 1, 0);
-  drawicn(dst, (x + 1) * 8, y, geticn('H'), 1, 0);
+  drawicn(dst, x * 8, y, geticn('C'), 3, 0);
+  drawicn(dst, (x + 1) * 8, y, geticn('H'), 3, 0);
   drawicn(dst, (x + 2) * 8, y, geticn(character.charisma + 48), 1, 0);
   if (strncmp(character.race, "elf", 3) == 0) {
     drawicn(dst, (x + 3) * 8, y, geticn('+'), 2, 0);
@@ -212,12 +213,12 @@ void drawcha(Uint32 *dst, int x, int y) {
 }
 
 void drawgold(Uint32 *dst, int x, int y) {
-  char g[3];
+  char g[4] = "";
   sprintf(g, "%d", character.gold);
-  drawicn(dst, x * 8, y, geticn('G'), 1, 0);
-  drawicn(dst, (x + 1) * 8, y, geticn('P'), 1, 0);
-  for (int i = 0; i < 3; i++) {
-    drawicn(dst, (x + 2 + i) * 8, y, geticn(g[i]), 1, 0);
+  drawicn(dst, x * 8, y, geticn('G'), 3, 0);
+  drawicn(dst, (x + 1) * 8, y, geticn('P'), 3, 0);
+  for (int i = 0; i < 4; i++) {
+    drawicn(dst, (x + 2 + i) * 8, y, geticn(g[i]), 5, 0);
   }
 }
 
@@ -236,22 +237,22 @@ void drawclass(Uint32 *dst, int x, int y) {
 }
 
 void drawhealth(Uint32 *dst, int x, int y) {
-  char h[3];
+  char h[3] = "";
   sprintf(h, "%d", character.health);
-  drawicn(dst, x * 8, y, geticn('H'), 1, 0);
-  drawicn(dst, (x + 1) * 8, y, geticn('P'), 1, 0);
+  drawicn(dst, x * 8, y, geticn('H'), 3, 0);
+  drawicn(dst, (x + 1) * 8, y, geticn('P'), 3, 0);
   for (int i = 0; i < 3; i++) {
-    drawicn(dst, (x + 2 + i) * 8, y, geticn(h[i]), 1, 0);
+    drawicn(dst, (x + 2 + i) * 8, y, geticn(h[i]), 6, 0);
   }
 }
 
 void drawwill(Uint32 *dst, int x, int y) {
-  char w[3];
+  char w[3] = "";
   sprintf(w, "%d", character.will);
-  drawicn(dst, x * 8, y, geticn('W'), 1, 0);
-  drawicn(dst, (x + 1) * 8, y, geticn('P'), 1, 0);
+  drawicn(dst, x * 8, y, geticn('W'), 3, 0);
+  drawicn(dst, (x + 1) * 8, y, geticn('P'), 3, 0);
   for (int i = 0; i < 3; i++) {
-    drawicn(dst, (x + 2 + i) * 8, y, geticn(w[i]), 1, 0);
+    drawicn(dst, (x + 2 + i) * 8, y, geticn(w[i]), 2, 0);
   }
 }
 
@@ -262,9 +263,9 @@ void drawstats(Uint32 *dst, int x, int y) {
   drawdex(dst, x, y + 24);
   drawwits(dst, x, y + 32);
   drawcha(dst, x, y + 40);
-  drawgold(dst, x, y + 48);
-  drawhealth(dst, x + 40, y);
-  drawwill(dst, x + 40, y + 8);
+  drawhealth(dst, x + 72, y);
+  drawwill(dst, x + 72, y + 8);
+  drawgold(dst, x + 72, y + 16);
 }
 
 void clear(Uint32 *dst) {
@@ -276,7 +277,7 @@ void clear(Uint32 *dst) {
 
 void redraw(Uint32 *dst) {
 
-  drawstats(dst, 1, 1);
+  drawstats(dst, 0, 0);
 
   SDL_UpdateTexture(gTexture, NULL, dst, SCREEN_WIDTH * sizeof(Uint32));
   SDL_RenderClear(rend);
