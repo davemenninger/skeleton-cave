@@ -292,14 +292,14 @@ int main(int argc, char *args[]) {
 }
 
 int validate_character(Character *character) {
-  if (character->strength > 9)
-    return error("Character", "strength > 9");
-  if (character->dexterity > 9)
-    return error("Character", "dexterity > 9");
-  if (character->charisma > 9)
-    return error("Character", "charisma > 9");
-  if (character->wits > 9)
-    return error("Character", "wits > 9");
+  if (character->strength > 4)
+    return error("Character", "strength > 4");
+  if (character->dexterity > 4)
+    return error("Character", "dexterity > 4");
+  if (character->charisma > 4)
+    return error("Character", "charisma > 4");
+  if (character->wits > 4)
+    return error("Character", "wits > 4");
 
   if (character->strength + character->dexterity + character->charisma +
           character->wits >
