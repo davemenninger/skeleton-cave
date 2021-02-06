@@ -341,7 +341,6 @@ int validate_character(Character *character) {
       7)
     return error("Character", "sum of stats > 7");
 
-  printf("class: %s\n", character->class);
   if (strncmp(character->class, "fighter", 7) != 0 &&
       strncmp(character->class, "ranger", 6) != 0 &&
       strncmp(character->class, "wizard", 6) != 0 &&
@@ -364,7 +363,6 @@ int open_character(Character *character, char *name) {
   if (!f)
     return error("Load", "Invalid character file");
   while (fgets(line, 256, f)) {
-    printf("line: %s\n", line);
     sscanf(line, "strength=%d\n", &character->strength);
     sscanf(line, "dexterity=%d\n", &character->dexterity);
     sscanf(line, "wits=%d\n", &character->wits);
