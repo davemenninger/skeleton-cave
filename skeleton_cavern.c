@@ -23,6 +23,7 @@
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 const int PAD = 2;
+
 typedef struct {
   int strength, dexterity, charisma, wits;
   int gold;
@@ -37,11 +38,11 @@ typedef struct {
 } Room;
 
 typedef struct {
-  Room rooms[50];
+  Room room_list[GRAPH_PAPER_WIDTH * GRAPH_PAPER_HEIGHT];
 } Dungeon;
 
 typedef struct {
-  int color;
+  int room_id;
 } Cell;
 
 typedef struct {
@@ -71,6 +72,7 @@ int game_mode = INIT_MODE;
 // room generating
 Room current_gen_room;
 int gen_room_size = 0;
+int room_count = 0;
 
 Uint32 theme[] = {0x000000, 0xFFFFFF, 0x72DEC2, 0x666666,
                   0x222222, 0xBBBB11, 0xAA1111};
@@ -340,7 +342,7 @@ void drawcell(Uint32 *dst, int x, int y, Cell cell) {
   for (int i = 0; i < CELL_SIZE; i++) {
     for (int j = 0; j < CELL_SIZE; j++) {
       if (i != 0 && j != 0 && i != CELL_SIZE - 1 && j != CELL_SIZE - 1) {
-        putpixel(dst, x + i, y + j, cell.color);
+        putpixel(dst, x + i, y + j, dungeon.room_list[cell.room_id].type);
       }
     }
   }
@@ -383,6 +385,16 @@ void redraw(Uint32 *dst) {
   SDL_RenderClear(rend);
   SDL_RenderCopy(rend, gTexture, NULL, NULL);
   SDL_RenderPresent(rend);
+}
+
+void do_mouse(SDL_Event *event) {
+  mouse_x = event->motion.x - 20;
+  mouse_y = event->motion.y - 20;
+}
+
+void do_click(SDL_Event *event) {
+  printf("you clicked cell: %d , %d\n", selected_cell_i, selected_cell_j);
+  graphpaper.cells[selected_cell_i][selected_cell_j].room_id = room_count;
 }
 
 int main(int argc, char *args[]) {
@@ -437,8 +449,10 @@ int main(int argc, char *args[]) {
         }
         break;
       case SDL_MOUSEMOTION:
-        mouse_x = event.motion.x - 20;
-        mouse_y = event.motion.y - 20;
+        do_mouse(&event);
+        break;
+      case SDL_MOUSEBUTTONDOWN:
+        do_click(&event);
         break;
       default:
         (void)0;
@@ -578,7 +592,7 @@ void roll_for_gold(Character *character) {
 void erase_graph_paper(GraphPaper *graphpaper) {
   for (int i = 0; i < GRAPH_PAPER_WIDTH; i++) {
     for (int j = 0; j < GRAPH_PAPER_HEIGHT; j++) {
-      graphpaper->cells[i][j].color = 4;
+      graphpaper->cells[i][j].room_id = 0;
     }
   }
 }
@@ -631,10 +645,13 @@ int setup() {
 }
 
 void update_stuff() {
-  if (game_mode == ROOM_SIZE_MODE) {
+  if (game_mode == ROOM_SIZE_MODE || game_mode == ROOM_TYPE_MODE) {
     if (current_gen_room.size == 0) {
       gen_room();
-      printf("room size: %d\n", current_gen_room.size);
+      room_count++;
+      dungeon.room_list[room_count] = current_gen_room;
+    } else {
+      game_mode++;
     }
   }
 
