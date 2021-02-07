@@ -1,8 +1,9 @@
 # SkeletonCavern
+![screenshot](screenshot.bmp)
 
 ## player.character file
 
-The program loads a file named `player.character` from the local directory.  Edit this file to alter your character's starting stats.  The file format is like:
+The program loads a file named `player.character` from the current directory.  Edit this file to alter your character's starting stats.  The file format is like:
 
 ```
 strength=2

@@ -6,7 +6,7 @@
 #define CHARACTER_MODE 2
 #define WEAPONS_MODE 3
 #define ITEMS_MODE 4
-#define ROOM_SIZE_MODE 5
+#define ROOM_DRAW_MODE 5
 #define ROOM_TYPE_MODE 6
 #define DOOR_MODE 7
 #define MONSTERS_MODE 8
@@ -387,14 +387,69 @@ void redraw(Uint32 *dst) {
   SDL_RenderPresent(rend);
 }
 
+int count_cells_for_room_id(int room_id) {
+  int num = 0;
+  for (int i = 0; i < GRAPH_PAPER_WIDTH; i++) {
+    for (int j = 0; j < GRAPH_PAPER_HEIGHT; j++) {
+      if (graphpaper.cells[i][j].room_id == room_id) {
+        num++;
+      }
+    }
+  }
+  return num;
+}
+
+int is_selected_cell_adjacent_room_id(int room_id) {
+  int num = 0;
+  for (int i = 0; i < GRAPH_PAPER_WIDTH; i++) {
+    for (int j = 0; j < GRAPH_PAPER_HEIGHT; j++) {
+      // if this cell is same as room_id, and:
+      // either same row, plus or minus column,
+      // or same column, plus or minus row
+      if (graphpaper.cells[i][j].room_id == room_id &&
+          (((i == selected_cell_i + 1 || i == selected_cell_i - 1) &&
+            j == selected_cell_j) ||
+           ((j == selected_cell_j + 1 || j == selected_cell_j - 1) &&
+            i == selected_cell_i))) {
+        num++;
+      }
+    }
+  }
+  return num;
+}
+
+int validate_cell_add(int room_id) {
+  int existing_cells = 0;
+  existing_cells = count_cells_for_room_id(room_id);
+  if (existing_cells >= dungeon.room_list[room_id].size) {
+    return 0;
+  }
+
+  if (existing_cells == 0) {
+    return 1;
+  }
+
+  // selected_cell_i and selected_cell_j must be adjacent an existing cell for
+  // this room_id
+  if (is_selected_cell_adjacent_room_id(room_id) == 0) {
+    return 0;
+  }
+
+  return 1;
+}
+
 void do_mouse(SDL_Event *event) {
   mouse_x = event->motion.x - 20;
   mouse_y = event->motion.y - 20;
 }
 
 void do_click(SDL_Event *event) {
-  printf("you clicked cell: %d , %d\n", selected_cell_i, selected_cell_j);
-  graphpaper.cells[selected_cell_i][selected_cell_j].room_id = room_count;
+  if (game_mode == ROOM_DRAW_MODE) {
+    int r_id = room_count;
+    if (validate_cell_add(r_id) == 1) {
+      graphpaper.cells[selected_cell_i][selected_cell_j].room_id = r_id;
+    }
+  }
 }
 
 int main(int argc, char *args[]) {
@@ -404,7 +459,7 @@ int main(int argc, char *args[]) {
   if (setup() != 0)
     return error("Setup", "Error");
 
-  game_mode = ROOM_SIZE_MODE;
+  game_mode = ROOM_DRAW_MODE;
 
   while (!quit) {
     while (SDL_PollEvent(&event)) {
@@ -645,13 +700,13 @@ int setup() {
 }
 
 void update_stuff() {
-  if (game_mode == ROOM_SIZE_MODE || game_mode == ROOM_TYPE_MODE) {
+  if (game_mode == ROOM_DRAW_MODE || game_mode == ROOM_TYPE_MODE) {
     if (current_gen_room.size == 0) {
       gen_room();
       room_count++;
       dungeon.room_list[room_count] = current_gen_room;
     } else {
-      game_mode++;
+      // game_mode++;
     }
   }
 
