@@ -7,7 +7,7 @@
 #define WEAPONS_MODE 3
 #define ITEMS_MODE 4
 #define ROOM_DRAW_MODE 5
-#define ROOM_TYPE_MODE 6
+#define ROOM_DOOR_MODE 6
 #define DOOR_MODE 7
 #define MONSTERS_MODE 8
 #define FIGHTING_MODE 9
@@ -35,6 +35,7 @@ typedef struct {
 typedef struct {
   int size;
   int type;
+  int door_count;
 } Room;
 
 typedef struct {
@@ -438,6 +439,13 @@ int validate_cell_add(int room_id) {
   return 1;
 }
 
+int validate_door_add(){
+  return 0;
+}
+
+void add_door(){
+}
+
 void do_mouse(SDL_Event *event) {
   mouse_x = event->motion.x - 20;
   mouse_y = event->motion.y - 20;
@@ -448,6 +456,13 @@ void do_click(SDL_Event *event) {
     int r_id = room_count;
     if (validate_cell_add(r_id) == 1) {
       graphpaper.cells[selected_cell_i][selected_cell_j].room_id = r_id;
+    }
+  }
+  else if (game_mode == ROOM_DOOR_MODE) {
+    // if the mouse click is on any edge of the current room we are drawing ( that doesn't already have a door )
+    if(validate_door_add() == 1){
+      // add these two neighboring cells to adjcency/door list
+      add_door();
     }
   }
 }
@@ -657,6 +672,8 @@ void gen_room() {
   current_gen_room.size = dice(1, 6);
   printf("rolling for room type...\n");
   current_gen_room.type = dice(1, 6);
+  printf("rolling for num doors...\n");
+  current_gen_room.door_count = dice(1, 3);
 }
 
 int setup() {
@@ -700,14 +717,16 @@ int setup() {
 }
 
 void update_stuff() {
-  if (game_mode == ROOM_DRAW_MODE || game_mode == ROOM_TYPE_MODE) {
-    if (current_gen_room.size == 0) {
+  if (game_mode == ROOM_DRAW_MODE) {
+    if (current_gen_room.size == 0) { // we haven't started this room yet
       gen_room();
       room_count++;
       dungeon.room_list[room_count] = current_gen_room;
-    } else {
-      // game_mode++;
+    } else if ( // we're done drawing cells
+        current_gen_room.size == count_cells_for_room_id(room_count)) {
+      game_mode = ROOM_DOOR_MODE;
     }
+  } else if (game_mode == ROOM_DOOR_MODE) {
   }
 
   if (mouse_x > GRAPH_PAPER_X && mouse_y > GRAPH_PAPER_Y &&
