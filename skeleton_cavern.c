@@ -13,11 +13,11 @@
 #define FIGHTING_MODE 9
 #define TREASURE_MODE 10
 
-#define GRAPH_PAPER_WIDTH 16
-#define GRAPH_PAPER_HEIGHT 16
+#define GRAPH_PAPER_WIDTH 32
+#define GRAPH_PAPER_HEIGHT 24
 #define CELL_SIZE 16
-#define GRAPH_PAPER_X 64
-#define GRAPH_PAPER_Y 64
+#define GRAPH_PAPER_X 72
+#define GRAPH_PAPER_Y 0
 
 /* Screen dimension constants */
 const int SCREEN_WIDTH = 640;
@@ -315,9 +315,9 @@ void drawstats(Uint32 *dst, int x, int y) {
   drawdex(dst, x, y + 24);
   drawwits(dst, x, y + 32);
   drawcha(dst, x, y + 40);
-  drawhealth(dst, x + 72, y);
-  drawwill(dst, x + 72, y + 8);
-  drawgold(dst, x + 72, y + 16);
+  drawhealth(dst, x, y + 56);
+  drawwill(dst, x, y + 64);
+  drawgold(dst, x, y + 72);
 }
 
 void drawmode(Uint32 *dst, int x, int y) {
@@ -388,7 +388,7 @@ void redraw(Uint32 *dst) {
   drawmouse(dst);
   drawstats(dst, 0, 0);
   drawmode(dst, 0, 400);
-  drawgraphpaper(dst, GRAPH_PAPER_X, GRAPH_PAPER_X);
+  drawgraphpaper(dst, GRAPH_PAPER_X, GRAPH_PAPER_Y);
 
   SDL_UpdateTexture(gTexture, NULL, dst, SCREEN_WIDTH * sizeof(Uint32));
   SDL_RenderClear(rend);

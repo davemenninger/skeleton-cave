@@ -1,4 +1,4 @@
-# SkeletonCavern
+# Skeleton Cavern
 ![screenshot](screenshot.bmp)
 
 ## player.character file
