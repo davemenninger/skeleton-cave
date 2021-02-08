@@ -61,8 +61,10 @@ Uint32 render_flags =
     0; // SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
 Uint32 *pixels;
 
-int mouse_x, mouse_y = 0;
-int selected_cell_i, selected_cell_j = 0;
+int mouse_x = 0, mouse_y = 0;
+int selected_cell_i = -1, selected_cell_j = -1;
+int door_pick_from_i = -1, door_pick_from_j = -1, door_pick_to_i = -1,
+    door_pick_to_j = -1;
 
 Character character;
 Dungeon dungeon;
@@ -76,7 +78,7 @@ int gen_room_size = 0;
 int room_count = 0;
 
 Uint32 theme[] = {0x000000, 0xFFFFFF, 0x72DEC2, 0x666666,
-                  0x222222, 0xBBBB11, 0xAA1111};
+                  0x222222, 0xBBBB11, 0xAA1111, 0x11AA11};
 
 Uint8 icons[][8] = {
     {0x10, 0x00, 0x10, 0x00, 0x10, 0x00, 0x10, 0x00}, /* ruler */
@@ -87,7 +89,8 @@ Uint8 icons[][8] = {
     {0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c}, /* scroll:fg */
     {0x00, 0x00, 0x00, 0x82, 0x44, 0x38, 0x00, 0x00}, /* eye open */
     {0x00, 0x38, 0x44, 0x92, 0x28, 0x10, 0x00, 0x00}, /* eye closed */
-    {0x10, 0x54, 0x28, 0xc6, 0x28, 0x54, 0x10, 0x00}  /* unsaved */
+    {0x10, 0x54, 0x28, 0xc6, 0x28, 0x54, 0x10, 0x00}, /* unsaved */
+    {0x18, 0x24, 0x42, 0x42, 0x81, 0x81, 0x81, 0xFF}  /* door */
 };
 
 Uint8 font[][8] = {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* space */
@@ -361,7 +364,12 @@ void drawgraphpaper(Uint32 *dst, int x, int y) {
                graphpaper.cells[i][j]);
 
       if (i == selected_cell_i && j == selected_cell_j) {
-        putpixel(dst, (i * CELL_SIZE) + x + 5, (j * CELL_SIZE) + y + 5, 6);
+        putpixel(dst, (i * CELL_SIZE) + x + 5, (j * CELL_SIZE) + y + 5, 1);
+      }
+
+      if (i == door_pick_from_i && j == door_pick_from_j) {
+        drawicn(dst, (i * CELL_SIZE) + x + (CELL_SIZE / 4),
+                (j * CELL_SIZE) + y + (CELL_SIZE / 4), icons[9], 1, 0);
       }
     }
   }
@@ -439,12 +447,9 @@ int validate_cell_add(int room_id) {
   return 1;
 }
 
-int validate_door_add(){
-  return 0;
-}
+int validate_door_add() { return 0; }
 
-void add_door(){
-}
+void add_door() {}
 
 void do_mouse(SDL_Event *event) {
   mouse_x = event->motion.x - 20;
@@ -457,10 +462,10 @@ void do_click(SDL_Event *event) {
     if (validate_cell_add(r_id) == 1) {
       graphpaper.cells[selected_cell_i][selected_cell_j].room_id = r_id;
     }
-  }
-  else if (game_mode == ROOM_DOOR_MODE) {
-    // if the mouse click is on any edge of the current room we are drawing ( that doesn't already have a door )
-    if(validate_door_add() == 1){
+  } else if (game_mode == ROOM_DOOR_MODE) {
+    door_pick_from_i = selected_cell_i;
+    door_pick_from_j = selected_cell_j;
+    if (validate_door_add() == 1) {
       // add these two neighboring cells to adjcency/door list
       add_door();
     }
@@ -471,10 +476,14 @@ int main(int argc, char *args[]) {
   (void)argc;
   (void)args;
 
+  printf("dpfi: %d\n", door_pick_from_i);
+
   if (setup() != 0)
     return error("Setup", "Error");
 
   game_mode = ROOM_DRAW_MODE;
+
+  printf("dpfi: %d\n", door_pick_from_i);
 
   while (!quit) {
     while (SDL_PollEvent(&event)) {
@@ -717,6 +726,14 @@ int setup() {
 }
 
 void update_stuff() {
+  if (mouse_x > GRAPH_PAPER_X && mouse_y > GRAPH_PAPER_Y &&
+      mouse_x < GRAPH_PAPER_X + (GRAPH_PAPER_WIDTH * CELL_SIZE) &&
+      mouse_y < GRAPH_PAPER_Y + (GRAPH_PAPER_HEIGHT * CELL_SIZE)) {
+
+    selected_cell_i = (mouse_x - GRAPH_PAPER_X) / CELL_SIZE;
+    selected_cell_j = (mouse_y - GRAPH_PAPER_Y) / CELL_SIZE;
+  }
+
   if (game_mode == ROOM_DRAW_MODE) {
     if (current_gen_room.size == 0) { // we haven't started this room yet
       gen_room();
@@ -727,13 +744,6 @@ void update_stuff() {
       game_mode = ROOM_DOOR_MODE;
     }
   } else if (game_mode == ROOM_DOOR_MODE) {
-  }
-
-  if (mouse_x > GRAPH_PAPER_X && mouse_y > GRAPH_PAPER_Y &&
-      mouse_x < GRAPH_PAPER_X + (GRAPH_PAPER_WIDTH * CELL_SIZE) &&
-      mouse_y < GRAPH_PAPER_Y + (GRAPH_PAPER_HEIGHT * CELL_SIZE)) {
-    selected_cell_i = (mouse_x - GRAPH_PAPER_X) / CELL_SIZE;
-    selected_cell_j = (mouse_y - GRAPH_PAPER_Y) / CELL_SIZE;
   }
 
   fflush(stdout);
