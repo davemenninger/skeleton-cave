@@ -1,5 +1,7 @@
 #include <SDL2/SDL.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 #define INIT_MODE 0
@@ -39,7 +41,17 @@ typedef struct {
 } Room;
 
 typedef struct {
+  int from_i;
+  int from_j;
+  int to_i;
+  int to_j;
+  int from_room_id;
+  int to_room_id;
+} Door;
+
+typedef struct {
   Room room_list[GRAPH_PAPER_WIDTH * GRAPH_PAPER_HEIGHT];
+  Door door_list[(GRAPH_PAPER_WIDTH + 1 * GRAPH_PAPER_HEIGHT + 1) * 2];
 } Dungeon;
 
 typedef struct {
@@ -76,6 +88,7 @@ int game_mode = INIT_MODE;
 Room current_gen_room;
 int gen_room_size = 0;
 int room_count = 0;
+int door_count = 0;
 
 Uint32 theme[] = {0x000000, 0xFFFFFF, 0x72DEC2, 0x666666,
                   0x222222, 0xBBBB11, 0xAA1111, 0x11AA11};
@@ -352,6 +365,41 @@ void drawcell(Uint32 *dst, int x, int y, Cell cell) {
   }
 }
 
+void drawdoor(Uint32 *dst, Door door) {
+  int x = GRAPH_PAPER_X + (CELL_SIZE * door.from_i);
+  int y = GRAPH_PAPER_Y + (CELL_SIZE * door.from_j);
+
+  if (door.from_i > door.to_i) {
+    // west door
+    putpixel(dst, x, y + 4, 7);
+    putpixel(dst, x, y + 5, 7);
+    putpixel(dst, x, y + 6, 7);
+    putpixel(dst, x, y + 7, 7);
+    putpixel(dst, x, y + 8, 7);
+  } else if (door.from_i < door.to_i) {
+    // east door
+    putpixel(dst, x + CELL_SIZE, y + 4, 7);
+    putpixel(dst, x + CELL_SIZE, y + 5, 7);
+    putpixel(dst, x + CELL_SIZE, y + 6, 7);
+    putpixel(dst, x + CELL_SIZE, y + 7, 7);
+    putpixel(dst, x + CELL_SIZE, y + 8, 7);
+  } else if (door.from_j > door.to_j) {
+    // north door
+    putpixel(dst, x + 4, y, 7);
+    putpixel(dst, x + 5, y, 7);
+    putpixel(dst, x + 6, y, 7);
+    putpixel(dst, x + 7, y, 7);
+    putpixel(dst, x + 8, y, 7);
+  } else if (door.from_j < door.to_j) {
+    // south door
+    putpixel(dst, x + 4, y + CELL_SIZE, 7);
+    putpixel(dst, x + 5, y + CELL_SIZE, 7);
+    putpixel(dst, x + 6, y + CELL_SIZE, 7);
+    putpixel(dst, x + 7, y + CELL_SIZE, 7);
+    putpixel(dst, x + 8, y + CELL_SIZE, 7);
+  }
+}
+
 void drawgraphpaper(Uint32 *dst, int x, int y) {
   for (int i = 0; i < GRAPH_PAPER_WIDTH; i++) {
     for (int j = 0; j < GRAPH_PAPER_HEIGHT; j++) {
@@ -371,6 +419,11 @@ void drawgraphpaper(Uint32 *dst, int x, int y) {
         drawicn(dst, (i * CELL_SIZE) + x + (CELL_SIZE / 4),
                 (j * CELL_SIZE) + y + (CELL_SIZE / 4), icons[9], 1, 0);
       }
+    }
+  }
+  for (int i = 0; i <= door_count; i++) {
+    if (dungeon.door_list[i].from_room_id > 0) {
+      drawdoor(dst, dungeon.door_list[i]);
     }
   }
 }
@@ -447,27 +500,84 @@ int validate_cell_add(int room_id) {
   return 1;
 }
 
-int validate_door_add() { return 0; }
+int count_doors_for_room_id(int room_id) {
+  int num = 0;
+  for (int i = 0; i < GRAPH_PAPER_WIDTH; i++) {
+    if (dungeon.door_list[i].from_room_id == room_id) {
+      num++;
+    }
+  }
+  return num;
+}
 
-void add_door() {}
+int validate_door_add(int room_id) {
+  int existing_doors = 0;
+  existing_doors = count_doors_for_room_id(room_id);
+  if (existing_doors >= dungeon.room_list[room_id].door_count) {
+    game_mode = MONSTERS_MODE;
+    return 0;
+  }
+
+  // is selected_cell adjacent to door_pick_from and a different room
+  if (graphpaper.cells[door_pick_from_i][door_pick_from_j].room_id !=
+          graphpaper.cells[selected_cell_i][selected_cell_j].room_id &&
+      (((door_pick_from_i == selected_cell_i + 1 ||
+         door_pick_from_i == selected_cell_i - 1) &&
+        door_pick_from_j == selected_cell_j) ||
+       ((door_pick_from_j == selected_cell_j + 1 ||
+         door_pick_from_j == selected_cell_j - 1) &&
+        door_pick_from_i == selected_cell_i))) {
+    return 1;
+  }
+
+  return 0;
+}
+
+void add_door() {
+  printf("door add\n");
+  Door d;
+  d.from_i = door_pick_from_i;
+  d.from_j = door_pick_from_j;
+  d.to_i = selected_cell_i;
+  d.to_j = selected_cell_j;
+  d.from_room_id = room_count;
+  dungeon.door_list[door_count] = d;
+  door_count++;
+  door_pick_from_i = -1;
+  door_pick_from_j = -1;
+  int existing_doors = 0;
+  existing_doors = count_doors_for_room_id(room_count);
+  if (existing_doors >= dungeon.room_list[room_count].door_count) {
+    game_mode = MONSTERS_MODE;
+  }
+}
 
 void do_mouse(SDL_Event *event) {
   mouse_x = event->motion.x - 20;
   mouse_y = event->motion.y - 20;
 }
 
-void do_click(SDL_Event *event) {
+void do_click() {
   if (game_mode == ROOM_DRAW_MODE) {
     int r_id = room_count;
     if (validate_cell_add(r_id) == 1) {
       graphpaper.cells[selected_cell_i][selected_cell_j].room_id = r_id;
     }
   } else if (game_mode == ROOM_DOOR_MODE) {
-    door_pick_from_i = selected_cell_i;
-    door_pick_from_j = selected_cell_j;
-    if (validate_door_add() == 1) {
-      // add these two neighboring cells to adjcency/door list
-      add_door();
+    if (door_pick_from_i == -1 && door_pick_from_j == -1) {
+      // door start hasn't been picked yet
+      if (graphpaper.cells[selected_cell_i][selected_cell_j].room_id ==
+          room_count) {
+        // door must start inside the current room
+        door_pick_from_i = selected_cell_i;
+        door_pick_from_j = selected_cell_j;
+      }
+    } else {
+      // door start has been picked
+      if (validate_door_add(room_count) == 1) {
+        // add these two neighboring cells to adjcency/door list
+        add_door();
+      }
     }
   }
 }
@@ -531,7 +641,7 @@ int main(int argc, char *args[]) {
         do_mouse(&event);
         break;
       case SDL_MOUSEBUTTONDOWN:
-        do_click(&event);
+        do_click();
         break;
       default:
         (void)0;
