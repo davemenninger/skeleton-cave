@@ -90,8 +90,14 @@ int gen_room_size = 0;
 int room_count = 0;
 int door_count = 0;
 
-Uint32 theme[] = {0x000000, 0xFFFFFF, 0x72DEC2, 0x666666,
-                  0x222222, 0xBBBB11, 0xAA1111, 0x11AA11};
+Uint32 theme[] = {0x000000, 0x4D2600,                               /* dirt */
+                  0x996633,                                         /* muddy */
+                  0x33677,                                          /* watery */
+                  0x666666,                                         /* stone */
+                  0x669999,                                         /* crypt */
+                  0x990000,                                         /* altar */
+                  0xFFFFFF, 0x72DEC2, 0x666666, 0x222222, 0xBBBB11, /* gold */
+                  0xAA1111, 0x11AA11};
 
 Uint8 icons[][8] = {
     {0x10, 0x00, 0x10, 0x00, 0x10, 0x00, 0x10, 0x00}, /* ruler */
@@ -238,74 +244,74 @@ void drawicn(Uint32 *dst, int x, int y, Uint8 *sprite, int fg, int bg) {
 void drawmouse(Uint32 *dst) { putpixel(dst, mouse_x, mouse_y, 1); }
 
 void drawstr(Uint32 *dst, int x, int y) {
-  drawicn(dst, x * 8, y, geticn('S'), 3, 0);
-  drawicn(dst, (x + 1) * 8, y, geticn('T'), 3, 0);
-  drawicn(dst, (x + 2) * 8, y, geticn(character.strength + 48), 1, 0);
+  drawicn(dst, x * 8, y, geticn('S'), 10, 0);
+  drawicn(dst, (x + 1) * 8, y, geticn('T'), 10, 0);
+  drawicn(dst, (x + 2) * 8, y, geticn(character.strength + 48), 7, 0);
   if (strncmp(character.race, "human", 5) == 0) {
-    drawicn(dst, (x + 3) * 8, y, geticn('+'), 2, 0);
-    drawicn(dst, (x + 4) * 8, y, geticn('1'), 2, 0);
+    drawicn(dst, (x + 3) * 8, y, geticn('+'), 8, 0);
+    drawicn(dst, (x + 4) * 8, y, geticn('1'), 8, 0);
   }
 }
 
 void drawdex(Uint32 *dst, int x, int y) {
-  drawicn(dst, x * 8, y, geticn('D'), 3, 0);
-  drawicn(dst, (x + 1) * 8, y, geticn('E'), 3, 0);
-  drawicn(dst, (x + 2) * 8, y, geticn(character.dexterity + 48), 1, 0);
+  drawicn(dst, x * 8, y, geticn('D'), 10, 0);
+  drawicn(dst, (x + 1) * 8, y, geticn('E'), 10, 0);
+  drawicn(dst, (x + 2) * 8, y, geticn(character.dexterity + 48), 7, 0);
   if (strncmp(character.race, "halfling", 8) == 0) {
-    drawicn(dst, (x + 3) * 8, y, geticn('+'), 2, 0);
-    drawicn(dst, (x + 4) * 8, y, geticn('1'), 2, 0);
+    drawicn(dst, (x + 3) * 8, y, geticn('+'), 8, 0);
+    drawicn(dst, (x + 4) * 8, y, geticn('1'), 8, 0);
   }
 }
 
 void drawwits(Uint32 *dst, int x, int y) {
-  drawicn(dst, x * 8, y, geticn('W'), 3, 0);
-  drawicn(dst, (x + 1) * 8, y, geticn('I'), 3, 0);
-  drawicn(dst, (x + 2) * 8, y, geticn(character.wits + 48), 1, 0);
+  drawicn(dst, x * 8, y, geticn('W'), 10, 0);
+  drawicn(dst, (x + 1) * 8, y, geticn('I'), 10, 0);
+  drawicn(dst, (x + 2) * 8, y, geticn(character.wits + 48), 7, 0);
   if (strncmp(character.race, "dwarf", 5) == 0) {
-    drawicn(dst, (x + 3) * 8, y, geticn('+'), 2, 0);
-    drawicn(dst, (x + 4) * 8, y, geticn('1'), 2, 0);
+    drawicn(dst, (x + 3) * 8, y, geticn('+'), 8, 0);
+    drawicn(dst, (x + 4) * 8, y, geticn('1'), 8, 0);
   }
 }
 
 void drawcha(Uint32 *dst, int x, int y) {
-  drawicn(dst, x * 8, y, geticn('C'), 3, 0);
-  drawicn(dst, (x + 1) * 8, y, geticn('H'), 3, 0);
-  drawicn(dst, (x + 2) * 8, y, geticn(character.charisma + 48), 1, 0);
+  drawicn(dst, x * 8, y, geticn('C'), 10, 0);
+  drawicn(dst, (x + 1) * 8, y, geticn('H'), 10, 0);
+  drawicn(dst, (x + 2) * 8, y, geticn(character.charisma + 48), 7, 0);
   if (strncmp(character.race, "elf", 3) == 0) {
-    drawicn(dst, (x + 3) * 8, y, geticn('+'), 2, 0);
-    drawicn(dst, (x + 4) * 8, y, geticn('1'), 2, 0);
+    drawicn(dst, (x + 3) * 8, y, geticn('+'), 8, 0);
+    drawicn(dst, (x + 4) * 8, y, geticn('1'), 8, 0);
   }
 }
 
 void drawgold(Uint32 *dst, int x, int y) {
   char g[4] = "";
   sprintf(g, "%d", character.gold);
-  drawicn(dst, x * 8, y, geticn('G'), 3, 0);
-  drawicn(dst, (x + 1) * 8, y, geticn('P'), 3, 0);
+  drawicn(dst, x * 8, y, geticn('G'), 10, 0);
+  drawicn(dst, (x + 1) * 8, y, geticn('P'), 10, 0);
   for (int i = 0; i < 4; i++) {
-    drawicn(dst, (x + 2 + i) * 8, y, geticn(g[i]), 5, 0);
+    drawicn(dst, (x + 2 + i) * 8, y, geticn(g[i]), 11, 0);
   }
 }
 
 void drawrace(Uint32 *dst, int x, int y) {
   for (int i = 0; i < 8; i++) {
     char c = character.race[i];
-    drawicn(dst, (x + i) * 8, y, geticn(c), 1, 0);
+    drawicn(dst, (x + i) * 8, y, geticn(c), 9, 0);
   }
 }
 
 void drawclass(Uint32 *dst, int x, int y) {
   for (int i = 0; i < 7; i++) {
     char c = character.class[i];
-    drawicn(dst, (x + i) * 8, y, geticn(c), 1, 0);
+    drawicn(dst, (x + i) * 8, y, geticn(c), 9, 0);
   }
 }
 
 void drawhealth(Uint32 *dst, int x, int y) {
   char h[3] = "";
   sprintf(h, "%d", character.health);
-  drawicn(dst, x * 8, y, geticn('H'), 3, 0);
-  drawicn(dst, (x + 1) * 8, y, geticn('P'), 3, 0);
+  drawicn(dst, x * 8, y, geticn('H'), 10, 0);
+  drawicn(dst, (x + 1) * 8, y, geticn('P'), 10, 0);
   for (int i = 0; i < 3; i++) {
     drawicn(dst, (x + 2 + i) * 8, y, geticn(h[i]), 6, 0);
   }
@@ -314,10 +320,10 @@ void drawhealth(Uint32 *dst, int x, int y) {
 void drawwill(Uint32 *dst, int x, int y) {
   char w[3] = "";
   sprintf(w, "%d", character.will);
-  drawicn(dst, x * 8, y, geticn('W'), 3, 0);
-  drawicn(dst, (x + 1) * 8, y, geticn('P'), 3, 0);
+  drawicn(dst, x * 8, y, geticn('W'), 10, 0);
+  drawicn(dst, (x + 1) * 8, y, geticn('P'), 10, 0);
   for (int i = 0; i < 3; i++) {
-    drawicn(dst, (x + 2 + i) * 8, y, geticn(w[i]), 2, 0);
+    drawicn(dst, (x + 2 + i) * 8, y, geticn(w[i]), 8, 0);
   }
 }
 
@@ -386,7 +392,7 @@ void drawdoor(Uint32 *dst, Door door) {
     x = x + 4;
     y = y + CELL_SIZE - 4;
   }
-  drawicn(dst, x, y, icons[9], 7, 0);
+  drawicn(dst, x, y, icons[9], 2, 0);
 }
 
 void drawgraphpaper(Uint32 *dst, int x, int y) {
@@ -394,7 +400,7 @@ void drawgraphpaper(Uint32 *dst, int x, int y) {
     for (int j = 0; j < GRAPH_PAPER_HEIGHT; j++) {
       if (i == 0 || j == 0 || i == GRAPH_PAPER_WIDTH - 1 ||
           j == GRAPH_PAPER_HEIGHT - 1) {
-        putpixel(dst, (i * CELL_SIZE) + x, (j * CELL_SIZE) + y, 1);
+        putpixel(dst, (i * CELL_SIZE) + x, (j * CELL_SIZE) + y, 10);
       }
 
       drawcell(dst, (i * CELL_SIZE) + x, (j * CELL_SIZE) + y,
