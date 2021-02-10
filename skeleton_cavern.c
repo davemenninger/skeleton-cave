@@ -799,7 +799,7 @@ int dice(int n, int d) {
 }
 
 int dice_n(char *notation) {
-  int n = 0, d = 0, m = 0;
+  int n = 0, d = 1, m = 0;
   char s[10];
   sscanf(notation, "%dd%9s", &n, s);
   sscanf(s, "%d+%d", &d, &m);
