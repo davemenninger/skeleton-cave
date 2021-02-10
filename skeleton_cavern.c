@@ -371,33 +371,22 @@ void drawdoor(Uint32 *dst, Door door) {
 
   if (door.from_i > door.to_i) {
     // west door
-    putpixel(dst, x, y + 4, 7);
-    putpixel(dst, x, y + 5, 7);
-    putpixel(dst, x, y + 6, 7);
-    putpixel(dst, x, y + 7, 7);
-    putpixel(dst, x, y + 8, 7);
+    x = x - 4;
+    y = y + 4;
   } else if (door.from_i < door.to_i) {
     // east door
-    putpixel(dst, x + CELL_SIZE, y + 4, 7);
-    putpixel(dst, x + CELL_SIZE, y + 5, 7);
-    putpixel(dst, x + CELL_SIZE, y + 6, 7);
-    putpixel(dst, x + CELL_SIZE, y + 7, 7);
-    putpixel(dst, x + CELL_SIZE, y + 8, 7);
+    x = x + CELL_SIZE - 4;
+    y = y + 4;
   } else if (door.from_j > door.to_j) {
     // north door
-    putpixel(dst, x + 4, y, 7);
-    putpixel(dst, x + 5, y, 7);
-    putpixel(dst, x + 6, y, 7);
-    putpixel(dst, x + 7, y, 7);
-    putpixel(dst, x + 8, y, 7);
+    x = x + 4;
+    y = y - 4;
   } else if (door.from_j < door.to_j) {
     // south door
-    putpixel(dst, x + 4, y + CELL_SIZE, 7);
-    putpixel(dst, x + 5, y + CELL_SIZE, 7);
-    putpixel(dst, x + 6, y + CELL_SIZE, 7);
-    putpixel(dst, x + 7, y + CELL_SIZE, 7);
-    putpixel(dst, x + 8, y + CELL_SIZE, 7);
+    x = x + 4;
+    y = y + CELL_SIZE - 4;
   }
+  drawicn(dst, x, y, icons[9], 7, 0);
 }
 
 void drawgraphpaper(Uint32 *dst, int x, int y) {
@@ -519,9 +508,10 @@ int validate_door_add(int room_id) {
   }
 
   // is this door already exists
-  for(int i = 0; i < door_count ; i++){
+  for (int i = 0; i < door_count; i++) {
     Door d = dungeon.door_list[i];
-    if( d.from_i == door_pick_from_i && d.from_j == door_pick_from_j && d.to_i == selected_cell_i && d.to_j == selected_cell_j ){
+    if (d.from_i == door_pick_from_i && d.from_j == door_pick_from_j &&
+        d.to_i == selected_cell_i && d.to_j == selected_cell_j) {
       return 0;
     }
   }
@@ -585,8 +575,7 @@ void do_click() {
       if (validate_door_add(room_count) == 1) {
         // add these two neighboring cells to adjcency/door list
         add_door();
-      }
-      else{
+      } else {
         door_pick_from_i = -1;
         door_pick_from_j = -1;
       }
