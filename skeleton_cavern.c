@@ -518,6 +518,14 @@ int validate_door_add(int room_id) {
     return 0;
   }
 
+  // is this door already exists
+  for(int i = 0; i < door_count ; i++){
+    Door d = dungeon.door_list[i];
+    if( d.from_i == door_pick_from_i && d.from_j == door_pick_from_j && d.to_i == selected_cell_i && d.to_j == selected_cell_j ){
+      return 0;
+    }
+  }
+
   // is selected_cell adjacent to door_pick_from and a different room
   if (graphpaper.cells[door_pick_from_i][door_pick_from_j].room_id !=
           graphpaper.cells[selected_cell_i][selected_cell_j].room_id &&
@@ -577,6 +585,10 @@ void do_click() {
       if (validate_door_add(room_count) == 1) {
         // add these two neighboring cells to adjcency/door list
         add_door();
+      }
+      else{
+        door_pick_from_i = -1;
+        door_pick_from_j = -1;
       }
     }
   }
