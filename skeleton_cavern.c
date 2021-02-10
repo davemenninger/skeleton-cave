@@ -798,9 +798,20 @@ int dice(int n, int d) {
   return sum;
 }
 
+int dice_n(char *notation) {
+  int n = 0, d = 0, m = 0;
+  char s[10];
+  sscanf(notation, "%dd%9s", &n, s);
+  sscanf(s, "%d+%d", &d, &m);
+  if (m == 0) {
+    sscanf(s, "%d-%d", &d, &m);
+  }
+  return dice(n, d) + m;
+}
+
 void roll_for_gold(Character *character) {
   printf("rolling for initial gold...\n");
-  character->gold = dice(2, 6);
+  character->gold = dice_n("2d6");
 }
 
 void erase_graph_paper(GraphPaper *graphpaper) {
