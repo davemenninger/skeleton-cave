@@ -38,6 +38,8 @@ typedef struct {
   int size;
   int type;
   int door_count;
+  int monster_type;
+  int monster_count;
 } Room;
 
 typedef struct {
@@ -48,6 +50,14 @@ typedef struct {
   int from_room_id;
   int to_room_id;
 } Door;
+
+typedef struct {
+  char name[17];
+  int max_count;
+  int h_dmg;
+  int w_dmg;
+  int lf;
+} MonsterType;
 
 typedef struct {
   Room room_list[GRAPH_PAPER_WIDTH * GRAPH_PAPER_HEIGHT];
@@ -81,6 +91,14 @@ int door_pick_from_i = -1, door_pick_from_j = -1, door_pick_to_i = -1,
 Character character;
 Dungeon dungeon;
 GraphPaper graphpaper;
+
+MonsterType monster_types[] = {(MonsterType){"", 0, 0, 0, 0},
+                               (MonsterType){"Putrid Rat", 6, 1, 1, 1},
+                               (MonsterType){"Winged Rat", 6, 1, 1, 2},
+                               (MonsterType){"Floating Skull", 5, 1, 1, 5},
+                               (MonsterType){"Skeleton Archer", 4, 1, 1, 7},
+                               (MonsterType){"Skeleton Warrior", 3, 1, 1, 10},
+                               (MonsterType){"Necromancer", 1, 1, 1, 20}};
 
 int game_mode = INIT_MODE;
 
@@ -800,6 +818,14 @@ void gen_room() {
   current_gen_room.type = dice(1, 6);
   printf("rolling for num doors...\n");
   current_gen_room.door_count = dice(1, 3);
+  printf("roll for monster type...\n");
+  current_gen_room.monster_type = dice(1, 6);
+  printf("roll for monster count...\n");
+  current_gen_room.monster_count = 99;
+  while (current_gen_room.monster_count >
+         monster_types[current_gen_room.monster_type].max_count) {
+    current_gen_room.monster_count = dice(1, 6);
+  }
 }
 
 int setup() {
@@ -861,6 +887,7 @@ void update_stuff() {
       game_mode = ROOM_DOOR_MODE;
     }
   } else if (game_mode == ROOM_DOOR_MODE) {
+  } else if (game_mode == MONSTERS_MODE) {
   }
 
   fflush(stdout);
