@@ -32,6 +32,7 @@ typedef struct {
   char class[7];
   char race[8];
   int health, will;
+  int room_id;
 } Character;
 
 typedef struct {
@@ -127,7 +128,13 @@ Uint8 icons[][8] = {
     {0x00, 0x00, 0x00, 0x82, 0x44, 0x38, 0x00, 0x00}, /* eye open */
     {0x00, 0x38, 0x44, 0x92, 0x28, 0x10, 0x00, 0x00}, /* eye closed */
     {0x10, 0x54, 0x28, 0xc6, 0x28, 0x54, 0x10, 0x00}, /* unsaved */
-    {0x18, 0x24, 0x42, 0x42, 0x81, 0x81, 0x81, 0xFF}  /* door */
+    {0x18, 0x24, 0x42, 0x42, 0x81, 0x81, 0x81, 0xFF}, /* door */
+    {0xA5, 0xF1, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD},  /* monster 1 */
+    {0xEF, 0x01, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE},  /* monster 2 */
+    {0xF0, 0x12, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF},  /* monster 3 */
+    {0x02, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0},  /* monster 4 */
+    {0x12, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF, 0x01},  /* monster 5 */
+    {0x23, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0, 0x12}   /* monster 6 */
 };
 
 Uint8 font[][8] = {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, /* space */
@@ -365,17 +372,29 @@ void drawmode(Uint32 *dst, int x, int y) {
   drawicn(dst, (x + 4) * 8, y, geticn(game_mode + 48), 3, 0);
 }
 
-void drawroomsquare(Uint32 *dst, int x, int y) {
-  for (int i = x; i < 16; i++) {
-    for (int j = y; j < 16; j++) {
-      putpixel(dst, i, j, 3);
+void drawroom(Uint32 *dst, int x, int y) {
+  int room_id = character.room_id;
+  if (room_id != 0) {
+    drawicn(dst, x * 8, y, geticn('R'), 10, 0);
+    drawicn(dst, (x + 1) * 8, y, geticn('O'), 10, 0);
+    drawicn(dst, (x + 2) * 8, y, geticn('O'), 10, 0);
+    drawicn(dst, (x + 3) * 8, y, geticn('M'), 10, 0);
+    drawicn(dst, (x + 4) * 8, y, geticn(room_id + 48), 10, 0);
+    Room room = dungeon.room_list[room_id];
+    int box_size = 56;
+    for (int i = 0; i < box_size; i++) {
+      for (int j = 0; j < box_size; j++) {
+        if (i == 0 || j == 0 || i == box_size - 1 || j == box_size - 1) {
+          putpixel(dst, x + i, y + j + 8, 10);
+        } else {
+          putpixel(dst, x + i, y + j + 8, dungeon.room_list[room_id].type);
+        }
+      }
     }
-  }
-}
-
-void drawroom(Uint32 *dst, Room room) {
-  for (int i = 0; i < room.size; i++) {
-    drawroomsquare(dst, i * 16, i * 16);
+    for (int m = 0; m < room.monster_count; m++) {
+      drawicn(dst, x + ((((m % 3) * 2) + 1) * 8), y + (16 * ((m / 3) + 1)),
+              icons[room.monster_type + 9], 7, dungeon.room_list[room_id].type);
+    }
   }
 }
 
@@ -454,6 +473,7 @@ void redraw(Uint32 *dst) {
   drawmouse(dst);
   drawstats(dst, 0, 0);
   drawmode(dst, 0, 400);
+  drawroom(dst, 0, 240);
   drawgraphpaper(dst, GRAPH_PAPER_X, GRAPH_PAPER_Y);
 
   SDL_UpdateTexture(gTexture, NULL, dst, SCREEN_WIDTH * sizeof(Uint32));
@@ -556,7 +576,6 @@ int validate_door_add(int room_id) {
 }
 
 void add_door() {
-  printf("door add\n");
   Door d;
   d.from_i = door_pick_from_i;
   d.from_j = door_pick_from_j;
@@ -873,6 +892,7 @@ int setup() {
 
   roll_for_gold(&character);
   compute_health_and_will(&character);
+  character.room_id = 0;
 
   fflush(stdout);
 
@@ -893,6 +913,7 @@ void update_stuff() {
       gen_room();
       room_count++;
       dungeon.room_list[room_count] = current_gen_room;
+      character.room_id = room_count;
     } else if ( // we're done drawing cells
         current_gen_room.size == count_cells_for_room_id(room_count)) {
       game_mode = ROOM_DOOR_MODE;
