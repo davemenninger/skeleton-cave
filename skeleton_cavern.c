@@ -44,6 +44,7 @@ typedef struct {
 } Room;
 
 typedef struct {
+  int type;
   int from_i;
   int from_j;
   int to_i;
@@ -244,6 +245,29 @@ int error(char *msg, const char *err) {
   return 1;
 }
 
+int dice(int n, int d) {
+  int sum = 0;
+  printf("dice: %dd%d\n", n, d);
+  for (int i = 0; i < n; i++) {
+    int roll = (rand() % d) + 1;
+    printf("roll: %d\n", roll);
+    sum += roll;
+  }
+
+  return sum;
+}
+
+int dice_n(char *notation) {
+  int n = 0, d = 1, m = 0;
+  char s[10];
+  sscanf(notation, "%dd%9s", &n, s);
+  sscanf(s, "%d+%d", &d, &m);
+  if (m == 0) {
+    sscanf(s, "%d-%d", &d, &m);
+  }
+  return dice(n, d) + m;
+}
+
 void putpixel(Uint32 *dst, int x, int y, int color) {
   if (x >= 0 && x < SCREEN_WIDTH - 8 && y >= 0 && y < SCREEN_HEIGHT - 8)
     dst[(y + PAD * 8) * SCREEN_WIDTH + (x + PAD * 8)] = theme[color];
@@ -431,7 +455,7 @@ void drawdoor(Uint32 *dst, Door door) {
     x = x + 4;
     y = y + CELL_SIZE - 4;
   }
-  drawicn(dst, x, y, icons[9], 2, 0);
+  drawicn(dst, x, y, icons[9], door.type, 0);
 }
 
 void drawgraphpaper(Uint32 *dst, int x, int y) {
@@ -584,6 +608,7 @@ void add_door() {
   d.to_i = selected_cell_i;
   d.to_j = selected_cell_j;
   d.from_room_id = room_count;
+  d.type = dice(1, 6);
   dungeon.door_list[door_count] = d;
   door_count++;
   door_pick_from_i = -1;
@@ -625,6 +650,8 @@ void do_click() {
         door_pick_from_j = -1;
       }
     }
+  } else if (game_mode == DOOR_MODE) {
+    /* select a door to go through */
   }
 }
 
@@ -807,29 +834,6 @@ int open_character(Character *character, char *name) {
   return 0;
 }
 
-int dice(int n, int d) {
-  int sum = 0;
-  printf("dice: %dd%d\n", n, d);
-  for (int i = 0; i < n; i++) {
-    int roll = (rand() % d) + 1;
-    printf("roll: %d\n", roll);
-    sum += roll;
-  }
-
-  return sum;
-}
-
-int dice_n(char *notation) {
-  int n = 0, d = 1, m = 0;
-  char s[10];
-  sscanf(notation, "%dd%9s", &n, s);
-  sscanf(s, "%d+%d", &d, &m);
-  if (m == 0) {
-    sscanf(s, "%d-%d", &d, &m);
-  }
-  return dice(n, d) + m;
-}
-
 void roll_for_gold(Character *character) {
   printf("rolling for initial gold...\n");
   character->gold = dice_n("2d6");
@@ -867,6 +871,9 @@ void gen_room() {
   while (current_gen_room.monster_count >
          monster_types[current_gen_room.monster_type].max_count) {
     current_gen_room.monster_count = dice(1, 6);
+  }
+  if (room_count == 0) {
+    current_gen_room.monster_count = 0;
   }
 }
 
@@ -932,6 +939,9 @@ void update_stuff() {
     }
   } else if (game_mode == ROOM_DOOR_MODE) {
   } else if (game_mode == MONSTERS_MODE) {
+    if (dungeon.room_list[character.room_id].monster_count < 1) {
+      game_mode = DOOR_MODE;
+    }
   }
 
   fflush(stdout);
