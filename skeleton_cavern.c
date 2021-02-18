@@ -62,6 +62,11 @@ typedef struct {
 } MonsterType;
 
 typedef struct {
+  char name[7];
+  char bonus[5];
+} RoomType;
+
+typedef struct {
   Room room_list[GRAPH_PAPER_WIDTH * GRAPH_PAPER_HEIGHT];
   Door door_list[(GRAPH_PAPER_WIDTH + 1 * GRAPH_PAPER_HEIGHT + 1) * 2];
 } Dungeon;
@@ -101,6 +106,12 @@ MonsterType monster_types[] = {(MonsterType){"", 0, 0, 0, 0},
                                (MonsterType){"Skeleton Archer", 4, 1, 1, 7},
                                (MonsterType){"Skeleton Warrior", 3, 1, 1, 10},
                                (MonsterType){"Necromancer", 1, 1, 1, 20}};
+
+RoomType room_types[] = {
+    (RoomType){"", ""},          (RoomType){"Dirt", ""},
+    (RoomType){"Muddy", "DE+1"}, (RoomType){"Watery", "ST+1"},
+    (RoomType){"Stone", ""},     (RoomType){"Crypt", "WI+1"},
+    (RoomType){"Altar", "CH+1"}};
 
 int monsters_beaten[6];
 
@@ -401,16 +412,23 @@ void drawmode(Uint32 *dst, int x, int y) {
 void drawroom(Uint32 *dst, int x, int y) {
   int room_id = character.room_id;
   if (room_id != 0) {
-    drawicn(dst, x * 8, y, geticn('R'), 10, 0);
-    drawicn(dst, (x + 1) * 8, y, geticn('O'), 10, 0);
-    drawicn(dst, (x + 2) * 8, y, geticn('O'), 10, 0);
-    drawicn(dst, (x + 3) * 8, y, geticn('M'), 10, 0);
-    drawicn(dst, (x + 4) * 8, y, geticn(room_id + 48), 10, 0);
     Room room = dungeon.room_list[room_id];
+
+    char w[8] = "";
+    sprintf(w, "%s", room_types[room.type].name);
+    for (int i = 0; i < 8; i++) {
+      drawicn(dst, (x + i) * 8, y, geticn(w[i]), 9, 0);
+    }
+    char b[8] = "";
+    sprintf(b, "%s", room_types[room.type].bonus);
+    for (int i = 0; i < 8; i++) {
+      drawicn(dst, (x + i) * 8, (y + 8), geticn(b[i]), 9, 0);
+    }
+
     int box_size = 56;
     for (int i = 0; i < box_size; i++) {
-      for (int j = 0; j < box_size; j++) {
-        if (i == 0 || j == 0 || i == box_size - 1 || j == box_size - 1) {
+      for (int j = 8; j < box_size + 8; j++) {
+        if (i == 0 || j == 0 || i == box_size - 1 || j == box_size + 8 - 1) {
           putpixel(dst, x + i, y + j + 8, 10);
         } else {
           putpixel(dst, x + i, y + j + 8, dungeon.room_list[room_id].type);
