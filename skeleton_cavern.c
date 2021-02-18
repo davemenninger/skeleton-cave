@@ -95,6 +95,8 @@ int selected_cell_i = -1, selected_cell_j = -1;
 int door_pick_from_i = -1, door_pick_from_j = -1, door_pick_to_i = -1,
     door_pick_to_j = -1;
 
+int selected_door_id = 0;
+
 Character character;
 Dungeon dungeon;
 GraphPaper graphpaper;
@@ -455,6 +457,7 @@ void drawcell(Uint32 *dst, int x, int y, Cell cell) {
 void drawdoor(Uint32 *dst, Door door) {
   int x = GRAPH_PAPER_X + (CELL_SIZE * door.from_i);
   int y = GRAPH_PAPER_Y + (CELL_SIZE * door.from_j);
+  int highlight = 0;
 
   if (door.from_i > door.to_i) {
     // west door
@@ -473,7 +476,12 @@ void drawdoor(Uint32 *dst, Door door) {
     x = x + 4;
     y = y + CELL_SIZE - 4;
   }
-  drawicn(dst, x, y, icons[9], door.type, 0);
+
+  if (mouse_x > x && mouse_x < x + 8 && mouse_y > y && mouse_y < y + 8) {
+    highlight = 13;
+  }
+
+  drawicn(dst, x, y, icons[9], door.type, highlight);
 }
 
 void drawgraphpaper(Uint32 *dst, int x, int y) {
@@ -669,7 +677,8 @@ void do_click() {
       }
     }
   } else if (game_mode == DOOR_MODE) {
-    /* select a door to go through */
+    /* TODO select a door to go through */
+    printf("the selected door id was: %d\n", selected_door_id);
   }
 }
 
@@ -959,6 +968,34 @@ void update_stuff() {
   } else if (game_mode == MONSTERS_MODE) {
     if (dungeon.room_list[character.room_id].monster_count < 1) {
       game_mode = DOOR_MODE;
+    }
+  } else if (game_mode == DOOR_MODE) {
+    for (int i = 0; i <= door_count; i++) {
+      Door door = dungeon.door_list[i];
+      int x = GRAPH_PAPER_X + (CELL_SIZE * door.from_i);
+      int y = GRAPH_PAPER_Y + (CELL_SIZE * door.from_j);
+
+      if (door.from_i > door.to_i) {
+        // west door
+        x = x - 4;
+        y = y + 4;
+      } else if (door.from_i < door.to_i) {
+        // east door
+        x = x + CELL_SIZE - 4;
+        y = y + 4;
+      } else if (door.from_j > door.to_j) {
+        // north door
+        x = x + 4;
+        y = y - 4;
+      } else if (door.from_j < door.to_j) {
+        // south door
+        x = x + 4;
+        y = y + CELL_SIZE - 4;
+      }
+
+      if (mouse_x > x && mouse_x < x + 8 && mouse_y > y && mouse_y < y + 8) {
+        selected_door_id = i;
+      }
     }
   }
 
